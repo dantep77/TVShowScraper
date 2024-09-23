@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import csv
-import os
 
 # Set up selenium web driver
 driver = webdriver.Chrome()
