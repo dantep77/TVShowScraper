@@ -23,7 +23,7 @@ soup = BeautifulSoup(page_source, "lxml") #create Beautiful Soup object
 # Get ul item containing all shows
 showList = soup.findAll('ul', attrs={'class': 'ipc-metadata-list ipc-metadata-list--dividers-between sc-a1e81754-0 dHaCOW compact-list-view ipc-metadata-list--base'})
 
-    # Create result set containing all show 'li' items
+    # Create result set containing all show 'li' itemsdbdb
 li_items = showList[0].findAll('li', attrs={'class':'ipc-metadata-list-summary-item sc-10233bc-0 TwzGn cli-parent'})
 
 key = 1 #id for each show entry
@@ -43,5 +43,6 @@ for li in li_items:  # Iterate over each 'li'
     params = (key, title, score, rating)
     cursor.execute("INSERT OR REPLACE INTO shows(ID, title, score, rating) VALUES (?, ?, ?, ?)", params)
     con.commit()
+    key += 1
 print(res.fetchall())
 driver.quit()
