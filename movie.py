@@ -5,9 +5,9 @@ import datetime
 from selenium.webdriver import ChromeOptions
 
 #set up sqlite database
-
 con  = sqlite3.connect('showDatabase.db')
 cursor = con.cursor()
+
 
 def scrape_and_insert():
     # create a table containing data about each of the top 250 imdb shows
@@ -47,9 +47,46 @@ def scrape_and_insert():
 
         #insert into table
         params = (title, score, rating, timestamp)
-        cursor.execute("INSERT OR REPLACE INTO shows(title, score, rating, timestamp) VALUES (?, ?, ?, ?)", params)
+        cursor.execute("INSERT INTO shows(title, score, rating, timestamp) VALUES (?, ?, ?, ?)", params)
         con.commit()
-    con.close()
     driver.quit()
 
-scrape_and_insert()
+def compare_data():
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
+    cursor.execute('SELECT id, title, score, rating FROM shows WHERE timestamp = ?', (today,))
+    today_data = cursor.fetchall()
+
+    cursor.execute('SELECT id, title, score, rating FROM shows WHERE timestamp = ?', (yesterday,))
+    yesterday_data = cursor.fetchall()
+
+    today_set = {(title, score, rating) for _, title, score, rating in today_data}
+    yesterday_set = {(title, score, rating) for _, title, score, rating in yesterday_data}
+
+    newShows = list(today_set - yesterday_set)
+
+    for today_show in today_data:
+        id, title, score, rating = today_show
+        if (title, score, rating) not in newShows:
+            cursor.execute('SELECT id, title, score, rating FROM shows WHERE timestamp = ? AND title = ?', (yesterday, title))
+            yesterday_show = cursor.fetchone()
+            if yesterday_show:
+                if (title, score, rating) != (yesterday_show[1], yesterday_show[2], yesterday_show[3]):
+                    rank_difference = (id) - (yesterday_show[0]+500)
+                    print(f"{title} (ID: {id}) moved {rank_difference} positions")
+    
+    print(newShows)
+def remove_duplicates():
+    cursor.execute('''
+        DELETE FROM shows
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM shows
+            GROUP BY title, score, rating, timestamp
+        )
+    ''')
+
+    con.commit()
+
+con.close()
