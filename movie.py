@@ -86,7 +86,7 @@ def compare_data():
 
             if yesterday_show: #if there is an equivalent show for yesterday #? is this necessary
                 if (title, rating) != (yesterday_show[1], yesterday_show[3]):
-                    rank_difference = (id) - (yesterday_show[0]+500)
+                    rank_difference = (id - 250) - (yesterday_show[0])
                     changes += [title, rank_difference]
     
     return changes + newShows
