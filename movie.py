@@ -4,12 +4,15 @@ import sqlite3
 import datetime
 from selenium.webdriver import ChromeOptions
 
-#Connect to sqlite 3 database containing shows table
-con  = sqlite3.connect('showDatabase.db')
-cursor = con.cursor()
+
 
 def scrape_and_insert():
     #*Scrapes the top 250 shows from IMDB and inserts them into a table in showDatabase
+
+    #Connect to sqlite 3 database containing shows table
+    con  = sqlite3.connect('showDatabase.db')
+    cursor = con.cursor()
+
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d') #Timestamp used to mark each entry
     cursor.execute("CREATE TABLE IF NOT EXISTS shows(ID INTEGER PRIMARY KEY, title, score, rating, timestamp)") # Create a sqlite3 table with an id, title, imdb rating, maturity rating, and a timestamp
 
@@ -49,6 +52,7 @@ def scrape_and_insert():
         cursor.execute("INSERT INTO shows(title, score, rating, timestamp) VALUES (?, ?, ?, ?)", params)
         con.commit()
     driver.quit() #quit webdriver
+    con.close()
 
 def compare_data():
     '''
@@ -58,6 +62,10 @@ def compare_data():
     -------
     2d list containing the name of a show and ranking increase (0 for a new show)
     '''
+    
+    #Connect to sqlite 3 database containing shows table
+    con  = sqlite3.connect('showDatabase.db')
+    cursor = con.cursor()
 
     today = datetime.datetime.now().strftime('%Y-%m-%d') #Set the value for today in the same format as the table
     yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d') #Set the value for yesterday in the same format as the table
@@ -88,10 +96,17 @@ def compare_data():
                 if (title, rating) != (yesterday_show[1], yesterday_show[3]):
                     rank_difference = (id - 250) - (yesterday_show[0])
                     changes += [title, rank_difference]
-    
+    con.close()
     return changes + newShows
 
 def remove_duplicates():
+    '''
+    Remove duplicates from the shows table
+    '''
+    #Connect to sqlite 3 database containing shows table
+    con  = sqlite3.connect('showDatabase.db')
+    cursor = con.cursor()
+
     cursor.execute('''
         DELETE FROM shows
         WHERE rowid NOT IN (
@@ -102,6 +117,10 @@ def remove_duplicates():
     ''')
 
     con.commit()
+    con.close()
 
-scrape_and_insert()
-con.close()
+def main():
+    scrape_and_insert
+
+if __name__ == '__main__':
+    main()
